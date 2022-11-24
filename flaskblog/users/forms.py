@@ -1,9 +1,10 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
-from flaskblog.models import User
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
+from flaskblog.models import User
+from flaskblog.users.utils import save_picture, send_reset_email
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', 
@@ -63,10 +64,6 @@ class UpdateAccountForm(FlaskForm):
                 raise ValidationError('That email is taken. Please, choose another.')
 
 
-class PostForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    content = TextAreaField('Content', validators=[DataRequired()])
-    submit = SubmitField('Post')
 
 
 class RequestResetForm(FlaskForm):

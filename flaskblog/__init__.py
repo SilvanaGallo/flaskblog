@@ -1,29 +1,43 @@
 import os
-from flask import Flask
+from flask import Flask, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
+from flaskblog.config import Config
 
 
-app = Flask(__name__)
 
-app.config['SECRET_KEY'] = '33c65820ed84e0d6e03e3adbfeefe7c32850ee61eed412edfcc0fab12b7833d7'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:secret@localhost:5432/flaskblog'
+db = SQLAlchemy()
+migrate = Migrate(db, compare_type=True)
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db, compare_type=True)
-bcrypt = Bcrypt(app)
+bcrypt = Bcrypt()
 
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager = LoginManager()
+login_manager.login_view = 'users.login'
 login_manager.login_message_category = 'info'
-app.config['MAIL_SERVER'] = 'localhost'
-app.config['MAIL_PORT'] = 1025
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
-mail = Mail(app)
 
-from flaskblog import routes
+mail = Mail()
+
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(Config)
+
+    db.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
+
+    from flaskblog.main.routes import main
+    from flaskblog.users.routes import users
+    from flaskblog.posts.routes import posts
+    from flaskblog.errors.handlers import errors
+
+    app.register_blueprint(main)
+    app.register_blueprint(users)
+    app.register_blueprint(posts)
+    app.register_blueprint(errors)
+
+    return app
